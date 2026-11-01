@@ -1,0 +1,39 @@
+# PENTEST PORTFOLIO - LAB 1 + LAB 2
+Tester: debker | Blangpidie, Aceh | 31 Mei 2026
+Target: http://localhost:8080 (Docker php:8.2-apache)
+Tools: Docker, curl, Nuclei v3.11.1
+
+LAB 1: PHPInfo Disclosure (Low CVSS 3.7)
+
+VULN CODE: <?php phpinfo(); ?>
+
+STEP:
+0. docker run -d -p 8080:80 --name php-lab php:8.2-apache
+1. echo "<?php phpinfo(); ?>" > /tmp/info.php + docker cp
+2. curl -> PHP Version 8.2.35 (VULN)
+3. nuclei -u http://localhost:8080 -t phpinfo-files.yaml -v
+   -> [phpinfo-files] 1 matches found.
+4. FIX: docker exec php-lab rm /var/www/html/info.php
+5. VERIFY: 404 + No results found.
+
+LAB 2: LFI (High CVSS 7.5)
+
+VULN CODE: include($_GET['file']);
+
+STEP:
+0. mkdir -p /tmp/lfi-lab + bikin index.php vuln + page.txt
+1. curl ?file=page.txt -> Halo Aceh! (NORMAL)
+2. curl ?file=../../../../etc/passwd -> root:x:0:0 (VULN CONFIRMED!)
+3. nuclei -u http://... -tags lfi -v
+4. FIX: $allowed = ['page.txt']; if(in_array($file,$allowed)) include
+5. VERIFY: 
+   - ?file=../../../../etc/passwd -> File tidak diizinkan (AMAN)
+   - ?file=page.txt -> Halo Aceh! (FITUR JALAN)
+
+CONCLUSION
+
+Workflow Profesional: RECON -> SCAN -> VERIFY -> REPORT -> REMEDIATE -> RE-SCAN
+Status: LAB 1 & LAB 2 = FIXED & VERIFIED
+Next: Level 3 File Upload RCE (Cloudflare CTF)
+
+Signature: debker - Blangpidie
